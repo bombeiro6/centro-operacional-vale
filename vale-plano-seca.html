@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0A0F0A">
+<title>VALE · Plano de Seca – Painel Operacional</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Barlow:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   TOKENS & RESET
+═══════════════════════════════════════════ */
+:root {
+  --g: #00E676;        /* verde operacional */
+  --g2: #00C853;
+  --g3: #1B5E20;
+  --y: #FFD600;        /* atenção */
+  --y2: #F9A825;
+  --r: #FF1744;        /* crítico */
+  --r2: #B71C1C;
+  --b: #00B0FF;        /* informação */
+  --b2: #0288D1;
+  --bg: #070C07;
+  --bg2: #0D130D;
+  --bg3: #111811;
+  --bg4: #161E16;
+  --border: rgba(0,230,118,0.12);
+  --border2: rgba(0,230,118,0.25);
+  --text: #E8F5E9;
+  --text2: #81C784;
+  --text3: #4CAF50;
+  --dim: #2E4A2E;
+  --ff-head: 'Barlow Condensed', sans-serif;
+  --ff-body: 'Barlow', sans-serif;
+  --ff-mono: 'Share Tech Mono', monospace;
+  --r4: 4px; --r8: 8px; --r12: 12px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 16px);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html { font-size:16px; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ff-body);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  padding-bottom: calc(70px + var(--safe-bot));
+}
+
+/* Scanline texture */
+body::before {
+  content:'';
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px
+  );
+}
+
+/* Ambient glow */
+body::after {
+  content:'';
+  position:fixed; top:0; left:50%; transform:translateX(-50%);
+  width:600px; height:300px; border-radius:50%;
+  background: radial-gradient(ellipse, rgba(0,200,83,0.06) 0%, transparent 70%);
+  pointer-events:none; z-index:0;
+}
+
+/* ═══════════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════════ */
+.topbar {
+  position: sticky; top:0; z-index:200;
+  background: rgba(7,12,7,0.96);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--border2);
+  padding: calc(var(--safe-top) + 10px) 16px 10px;
+  display: flex; align-items:center; justify-content:space-between;
+  gap: 12px;
+}
+
+.logo-block { display:flex; align-items:center; gap:10px; }
+
+.logo-hex {
+  width: 38px; height: 38px;
+  background: var(--g);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.logo-hex span {
+  font-family:var(--ff-head); font-size:13px; font-weight:900;
+  color:#000; letter-spacing:0.5px;
+}
+
+.logo-text { line-height:1.2; }
+.logo-main {
+  font-family:var(--ff-head); font-size:17px; font-weight:800;
+  color:var(--text); letter-spacing:1px; text-transform:uppercase;
+}
+.logo-sub {
+  font-family:var(--ff-mono); font-size:9px;
+  color:var(--text3); letter-spacing:2px;
+}
+
+.topbar-right { display:flex; align-items:center; gap:8px; }
+
+.prontidao-chip {
+  display:flex; align-items:center; gap:6px;
+  background: rgba(0,230,118,0.1);
+  border: 1px solid rgba(0,230,118,0.3);
+  border-radius:20px; padding:5px 10px;
+  font-family:var(--ff-mono); font-size:10px;
+  color:var(--g); white-space:nowrap;
+}
+.pulse-dot {
+  width:7px; height:7px; border-radius:50%;
+  background:var(--g); box-shadow:0 0 8px var(--g);
+  animation: blink 1.8s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.7)} }
+
+.clock-block {
+  font-family:var(--ff-mono); font-size:11px;
+  color:var(--text2); text-align:right; line-height:1.4;
+}
+.clock-time { font-size:14px; color:var(--text); }
+
+/* ═══════════════════════════════════════════
+   BOTTOM NAV (mobile-first)
+═══════════════════════════════════════════ */
+.bottom-nav {
+  position: fixed; bottom:0; left:0; right:0; z-index:200;
+  background: rgba(7,12,7,0.97);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border2);
+  display:flex;
+  padding-bottom: var(--safe-bot);
+}
+
+.nav-btn {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  gap:3px; padding:10px 4px;
+  cursor:pointer; border:none; background:none;
+  color:var(--dim); font-family:var(--ff-body); font-size:9px;
+  font-weight:600; letter-spacing:0.5px; text-transform:uppercase;
+  transition:color 0.2s; position:relative;
+}
+.nav-btn.active { color:var(--g); }
+.nav-btn.active::before {
+  content:''; position:absolute; top:0; left:20%; right:20%;
+  height:2px; background:var(--g); border-radius:0 0 2px 2px;
+  box-shadow:0 0 8px var(--g);
+}
+.nav-ico { font-size:20px; line-height:1; }
+
+.nav-badge {
+  position:absolute; top:6px; right:calc(50% - 18px);
+  width:16px; height:16px; border-radius:50%;
+  background:var(--r); color:#fff;
+  font-family:var(--ff-mono); font-size:9px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* ═══════════════════════════════════════════
+   PAGES
+═══════════════════════════════════════════ */
+.page { display:none; position:relative; z-index:1; }
+.page.active { display:block; animation:pageIn 0.25s ease; }
+@keyframes pageIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+.page-inner { padding:16px; display:flex; flex-direction:column; gap:14px; }
+
+/* ═══════════════════════════════════════════
+   ALERT BANNER
+═══════════════════════════════════════════ */
+.alert-banner {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 14px; border-radius:var(--r8);
+  font-family:var(--ff-body); font-size:13px; font-weight:500;
+  border-left:3px solid;
+}
+.ab-red { background:rgba(255,23,68,0.08); border-color:var(--r); color:#FF8A80; }
+.ab-yellow { background:rgba(255,214,0,0.08); border-color:var(--y); color:#FFE57F; }
+.ab-green { background:rgba(0,230,118,0.08); border-color:var(--g); color:#B9F6CA; }
+.ab-blue { background:rgba(0,176,255,0.08); border-color:var(--b); color:#80D8FF; }
+.ab-icon { font-size:18px; flex-shrink:0; }
+.ab-text strong { display:block; }
+
+/* ═══════════════════════════════════════════
+   SECTION HEADER
+═══════════════════════════════════════════ */
+.sec-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:2px;
+}
+.sec-title {
+  font-family:var(--ff-head); font-size:11px; font-weight:700;
+  color:var(--text3); letter-spacing:3px; text-transform:uppercase;
+}
+.sec-meta { font-family:var(--ff-mono); font-size:10px; color:var(--dim); }
+
+/* ═══════════════════════════════════════════
+   PRONTIDÃO HERO (Dashboard top)
+═══════════════════════════════════════════ */
+.prontidao-hero {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r12);
+  padding: 20px;
+  position:relative; overflow:hidden;
+  text-align:center;
+}
+.prontidao-hero::before {
+  content:'';
+  position:absolute; inset:0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(0,200,83,0.12) 0%, transparent 65%);
+  pointer-events:none;
+}
+.ph-label {
+  font-family:var(--ff-mono); font-size:10px; letter-spacing:3px;
+  color:var(--text3); text-transform:uppercase; margin-bottom:8px;
+}
+.ph-ring {
+  width: 120px; height:120px; margin: 0 auto 12px;
+  position:relative;
+}
+.ph-ring svg { width:100%; height:100%; transform:rotate(-90deg); }
+.ph-ring-bg { fill:none; stroke:var(--bg4); stroke-width:8; }
+.ph-ring-fill { fill:none; stroke-width:8; stroke-linecap:round; transition:stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1); }
+.ph-ring-fill.ok { stroke: var(--g); filter:drop-shadow(0 0 6px var(--g)); }
+.ph-ring-fill.warn { stroke: var(--y); filter:drop-shadow(0 0 6px var(--y)); }
+.ph-ring-fill.crit { stroke: var(--r); filter:drop-shadow(0 0 6px var(--r)); }
+.ph-center {
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+}
+.ph-pct {
+  font-family:var(--ff-head); font-size:32px; font-weight:900;
+  line-height:1;
+}
+.ph-pct.ok { color:var(--g); text-shadow:0 0 20px rgba(0,230,118,0.5); }
+.ph-pct.warn { color:var(--y); text-shadow:0 0 20px rgba(255,214,0,0.5); }
+.ph-pct.crit { color:var(--r); text-shadow:0 0 20px rgba(255,23,68,0.5); }
+.ph-pct-sub { font-family:var(--ff-mono); font-size:9px; color:var(--text3); letter-spacing:1px; }
+.ph-status-label {
+  font-family:var(--ff-head); font-size:20px; font-weight:800;
+  letter-spacing:2px; text-transform:uppercase;
+}
+.ph-status-label.ok { color:var(--g); }
+.ph-status-label.warn { color:var(--y); }
+.ph-status-label.crit { color:var(--r); }
+.ph-detail {
+  font-size:12px; color:var(--text2); margin-top:4px;
+  font-family:var(--ff-body);
+}
+
+/* ═══════════════════════════════════════════
+   KPI GRID
+═══════════════════════════════════════════ */
+.kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.kpi-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+
+.kpi {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--r8); padding:14px 12px;
+  position:relative; overflow:hidden;
+  transition:transform 0.15s, border-color 0.15s;
+  cursor:default;
+}
+.kpi:active { transform:scale(0.97); }
+.kpi-accent {
+  position:absolute; top:0; left:0; right:0; height:2px;
+  border-radius:var(--r8) var(--r8) 0 0;
+}
+.ka-g { background:linear-gradient(90deg,var(--g3),var(--g)); }
+.ka-y { background:linear-gradient(90deg,var(--y2),var(--y)); }
+.ka-r { background:linear-gradient(90deg,var(--r2),var(--r)); }
+.ka-b { background:linear-gradient(90deg,var(--b2),var(--b)); }
+.ka-w { background:linear-gradient(90deg,var(--dim),var(--text2)); }
+
+.kpi-label {
+  font-family:var(--ff-mono); font-size:9px; letter-spacing:1.5px;
+  color:var(--text3); text-transform:uppercase; margin-bottom:6px;
+  display:block;
+}
+.kpi-val {
+  font-family:var(--ff-head); font-size:34px; font-weight:900;
+  line-height:1; display:block;
+}
+.kpi-val.g { color:var(--g); text-shadow:0 0 16px rgba(0,230,118,0.3); }
+.kpi-val.y { color:var(--y); text-shadow:0 0 16px rgba(255,214,0,0.3); }
+.kpi-val.r { color:var(--r); text-shadow:0 0 16px rgba(255,23,68,0.3); }
+.kpi-val.b { color:var(--b); }
+.kpi-val.w { color:var(--text); }
+.kpi-sub {
+  font-size:11px; color:var(--dim); margin-top:4px; display:block;
+  font-family:var(--ff-body);
+}
+.kpi-icon {
+  position:absolute; bottom:10px; right:12px;
+  font-size:22px; opacity:0.12;
+}
+
+/* Wide KPI */
+.kpi-wide { grid-column:1/-1; }
+
+/* ═══════════════════════════════════════════
+   PROGRESS ROW
+═══════════════════════════════════════════ */
+.prog-row {
+  display:flex; flex-direction:column; gap:5px; margin-bottom:12px;
+}
+.prog-row:last-child { margin-bottom:0; }
+.prog-meta { display:flex; justify-content:space-between; align-items:center; }
+.prog-name { font-size:13px; color:var(--text); font-weight:500; }
+.prog-pct { font-family:var(--ff-mono); font-size:12px; }
+.prog-pct.g { color:var(--g); }
+.prog-pct.y { color:var(--y); }
+.prog-pct.r { color:var(--r); }
+.prog-bar-wrap { height:5px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden; }
+.prog-bar { height:100%; border-radius:3px; transition:width 1.2s ease; }
+.pb-g { background:linear-gradient(90deg,var(--g3),var(--g)); box-shadow:0 0 6px rgba(0,230,118,0.4); }
+.pb-y { background:linear-gradient(90deg,var(--y2),var(--y)); }
+.pb-r { background:linear-gradient(90deg,var(--r2),var(--r)); }
+.pb-b { background:linear-gradient(90deg,var(--b2),var(--b)); }
+
+/* ═══════════════════════════════════════════
+   CARD PANEL
+═══════════════════════════════════════════ */
+.panel {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--r12); overflow:hidden;
+}
+.panel-top {
+  padding:12px 14px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  background:rgba(0,0,0,0.2);
+}
+.panel-heading {
+  font-family:var(--ff-head); font-size:14px; font-weight:700;
+  letter-spacing:0.5px; color:var(--text);
+}
+.panel-body { padding:14px; }
+.panel-body-tight { padding:10px 14px; }
+
+/* ═══════════════════════════════════════════
+   STATUS LIST
+═══════════════════════════════════════════ */
+.status-list { display:flex; flex-direction:column; gap:0; }
+.status-row {
+  display:flex; align-items:center; gap:10px;
+  padding:11px 14px; border-bottom:1px solid rgba(255,255,255,0.04);
+  cursor:pointer; transition:background 0.15s;
+}
+.status-row:last-child { border-bottom:none; }
+.status-row:active { background:rgba(0,230,118,0.04); }
+.sr-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.sr-dot.g { background:var(--g); box-shadow:0 0 8px var(--g); }
+.sr-dot.y { background:var(--y); box-shadow:0 0 8px var(--y); }
+.sr-dot.r { background:var(--r); box-shadow:0 0 8px var(--r); }
+.sr-dot.d { background:var(--dim); }
+.sr-main { flex:1; }
+.sr-name { font-size:14px; font-weight:500; color:var(--text); }
+.sr-sub { font-family:var(--ff-mono); font-size:10px; color:var(--dim); margin-top:2px; }
+.sr-badge {
+  font-family:var(--ff-mono); font-size:10px; font-weight:700;
+  padding:3px 8px; border-radius:20px; white-space:nowrap;
+}
+.srb-g { background:rgba(0,230,118,0.1); color:var(--g); border:1px solid rgba(0,230,118,0.2); }
+.srb-y { background:rgba(255,214,0,0.1); color:var(--y); border:1px solid rgba(255,214,0,0.2); }
+.srb-r { background:rgba(255,23,68,0.1); color:var(--r); border:1px solid rgba(255,23,68,0.2); }
+.srb-b { background:rgba(0,176,255,0.1); color:var(--b); border:1px solid rgba(0,176,255,0.2); }
+.srb-d { background:rgba(255,255,255,0.05); color:var(--dim); border:1px solid rgba(255,255,255,0.08); }
+.sr-arrow { color:var(--dim); font-size:12px; }
+
+/* ═══════════════════════════════════════════
+   BAR CHART
+═══════════════════════════════════════════ */
+.bar-chart {
+  display:flex; align-items:flex-end; gap:6px;
+  height:90px; padding:4px 0;
+}
+.bc-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.bc-bar {
+  width:100%; border-radius:3px 3px 0 0;
+  min-height:3px; transition:height 0.8s ease;
+}
+.bc-bar.g { background:var(--g); opacity:0.75; }
+.bc-bar.y { background:var(--y); opacity:0.75; }
+.bc-bar.r { background:var(--r); opacity:0.75; }
+.bc-val { font-family:var(--ff-mono); font-size:9px; color:var(--text2); }
+.bc-lbl { font-family:var(--ff-mono); font-size:9px; color:var(--dim); }
+
+/* ═══════════════════════════════════════════
+   VIATURA CARDS
+═══════════════════════════════════════════ */
+.viatura-list { display:flex; flex-direction:column; gap:10px; }
+.viatura-card {
+  background:var(--bg3); border-radius:var(--r8);
+  border:1px solid var(--border); overflow:hidden;
+  position:relative;
+}
+.vc-stripe {
+  position:absolute; left:0; top:0; bottom:0; width:4px;
+}
+.vc-stripe.g { background:var(--g); box-shadow:2px 0 12px rgba(0,230,118,0.3); }
+.vc-stripe.y { background:var(--y); box-shadow:2px 0 12px rgba(255,214,0,0.3); }
+.vc-stripe.r { background:var(--r); box-shadow:2px 0 12px rgba(255,23,68,0.3); }
+.vc-body { padding:12px 12px 12px 18px; }
+.vc-row1 { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:8px; }
+.vc-name { font-family:var(--ff-head); font-size:17px; font-weight:800; letter-spacing:0.5px; }
+.vc-plate { font-family:var(--ff-mono); font-size:10px; color:var(--dim); margin-top:1px; }
+.vc-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+.vc-stat { background:rgba(0,0,0,0.2); border-radius:var(--r4); padding:6px 8px; }
+.vc-stat-l { font-family:var(--ff-mono); font-size:8px; color:var(--dim); text-transform:uppercase; letter-spacing:1px; }
+.vc-stat-v { font-family:var(--ff-head); font-size:15px; font-weight:700; margin-top:1px; }
+.sv-g { color:var(--g); }
+.sv-y { color:var(--y); }
+.sv-r { color:var(--r); }
+.sv-w { color:var(--text); }
+
+/* ═══════════════════════════════════════════
+   NC CARDS
+═══════════════════════════════════════════ */
+.nc-list { display:flex; flex-direction:column; gap:10px; }
+.nc-card {
+  background:var(--bg3); border-radius:var(--r8);
+  border:1px solid var(--border); padding:14px;
+  position:relative; overflow:hidden;
+}
+.nc-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+}
+.nc-card.crit::before { background:var(--r); box-shadow:0 0 12px var(--r); }
+.nc-card.mod::before { background:var(--y); }
+.nc-card.low::before { background:var(--b); }
+.nc-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+.nc-id { font-family:var(--ff-mono); font-size:10px; color:var(--text3); }
+.nc-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+.nc-area { font-size:12px; color:var(--dim); font-family:var(--ff-mono); }
+.nc-footer { display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.05); }
+.nc-resp { font-size:12px; color:var(--text2); }
+.nc-deadline { font-family:var(--ff-mono); font-size:11px; }
+.nc-deadline.urgent { color:var(--r); }
+.nc-deadline.ok { color:var(--text3); }
+
+/* ═══════════════════════════════════════════
+   CHECKLIST PAGE
+═══════════════════════════════════════════ */
+.ck-list { display:flex; flex-direction:column; }
+.ck-item {
+  display:flex; align-items:center; gap:12px;
+  padding:13px 14px; border-bottom:1px solid rgba(255,255,255,0.04);
+  cursor:pointer; transition:background 0.15s;
+}
+.ck-item:last-child { border-bottom:none; }
+.ck-item:active { background:rgba(0,230,118,0.03); }
+.ck-box {
+  width:26px; height:26px; border-radius:6px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; transition:all 0.2s;
+  border:2px solid var(--border2);
+  background:transparent; font-weight:700;
+}
+.ck-box.ok { background:var(--g); border-color:var(--g); color:#000; box-shadow:0 0 10px rgba(0,230,118,0.3); }
+.ck-box.nok { background:var(--r); border-color:var(--r); color:#fff; }
+.ck-box.na { background:var(--dim); border-color:var(--dim); color:var(--bg); font-size:10px; }
+.ck-text { flex:1; }
+.ck-label { font-size:14px; font-weight:500; color:var(--text); }
+.ck-sub { font-size:11px; color:var(--dim); margin-top:2px; }
+.ck-tag {
+  font-family:var(--ff-mono); font-size:9px;
+  padding:2px 7px; border-radius:20px;
+  background:rgba(255,255,255,0.05); color:var(--dim);
+}
+
+/* Progress pill */
+.prog-pill {
+  display:flex; align-items:center; gap:8px;
+  padding:10px 14px; background:var(--bg4);
+  border-radius:var(--r8); margin-bottom:12px;
+}
+.prog-pill-bar { flex:1; height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden; }
+.prog-pill-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--g3),var(--g)); box-shadow:0 0 8px rgba(0,230,118,0.4); transition:width 1s ease; }
+.prog-pill-text { font-family:var(--ff-mono); font-size:11px; color:var(--g); white-space:nowrap; }
+
+/* ═══════════════════════════════════════════
+   PLANO DE SECA PAGE
+═══════════════════════════════════════════ */
+.seca-nivel {
+  background:var(--bg2); border:1px solid var(--border2);
+  border-radius:var(--r12); padding:20px; text-align:center;
+  position:relative; overflow:hidden;
+}
+.seca-nivel::before {
+  content:''; position:absolute; inset:0;
+  background: radial-gradient(ellipse at 50% 100%, rgba(255,214,0,0.08) 0%, transparent 60%);
+}
+.sn-label { font-family:var(--ff-mono); font-size:9px; letter-spacing:3px; color:var(--text3); text-transform:uppercase; margin-bottom:10px; }
+.sn-badge {
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(255,214,0,0.1); border:1px solid rgba(255,214,0,0.3);
+  border-radius:var(--r8); padding:10px 20px; margin-bottom:12px;
+}
+.sn-badge-label { font-family:var(--ff-head); font-size:28px; font-weight:900; color:var(--y); letter-spacing:2px; }
+.sn-desc { font-size:13px; color:var(--text2); }
+
+.nivel-steps { display:flex; gap:4px; margin:14px 0 0; }
+.nivel-step { flex:1; height:8px; border-radius:2px; }
+.nivel-step.done-g { background:var(--g); }
+.nivel-step.done-y { background:var(--y); box-shadow:0 0 8px rgba(255,214,0,0.5); }
+.nivel-step.done-r { background:var(--r); }
+.nivel-step.empty { background:rgba(255,255,255,0.07); }
+
+.seca-actions { display:flex; flex-direction:column; gap:10px; }
+.seca-action {
+  display:flex; align-items:center; gap:12px;
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:var(--r8); padding:14px;
+  cursor:pointer; transition:border-color 0.2s;
+}
+.seca-action:active { border-color:var(--border2); }
+.sa-ico { font-size:24px; }
+.sa-text { flex:1; }
+.sa-title { font-size:14px; font-weight:600; }
+.sa-sub { font-size:11px; color:var(--dim); margin-top:2px; font-family:var(--ff-mono); }
+.sa-status { font-family:var(--ff-mono); font-size:11px; }
+
+/* ═══════════════════════════════════════════
+   MODAL BOTTOM SHEET
+═══════════════════════════════════════════ */
+.sheet-overlay {
+  position:fixed; inset:0; z-index:500;
+  background:rgba(0,0,0,0.8);
+  backdrop-filter:blur(4px);
+  display:none; align-items:flex-end;
+}
+.sheet-overlay.open { display:flex; }
+
+.sheet {
+  width:100%; max-height:90dvh; overflow-y:auto;
+  background:var(--bg2);
+  border-radius:20px 20px 0 0;
+  border-top:1px solid var(--border2);
+  padding:0 0 calc(var(--safe-bot) + 16px);
+  animation:slideUp 0.3s cubic-bezier(.4,0,.2,1);
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+.sheet-handle { width:36px; height:4px; background:var(--dim); border-radius:2px; margin:12px auto 0; }
+.sheet-header { padding:16px 20px 12px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.sheet-title { font-family:var(--ff-head); font-size:18px; font-weight:800; letter-spacing:0.5px; }
+.sheet-close { background:none; border:none; color:var(--dim); font-size:22px; cursor:pointer; padding:4px; }
+.sheet-body { padding:16px 20px; }
+
+/* ═══════════════════════════════════════════
+   FORM ELEMENTS
+═══════════════════════════════════════════ */
+.field-group { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+.field-label { font-family:var(--ff-mono); font-size:10px; letter-spacing:1.5px; color:var(--text3); text-transform:uppercase; }
+.field-input {
+  background:rgba(0,0,0,0.3); border:1px solid var(--border2);
+  border-radius:var(--r8); padding:12px 14px;
+  color:var(--text); font-family:var(--ff-body); font-size:14px;
+  outline:none; width:100%; appearance:none;
+  transition:border-color 0.2s;
+}
+.field-input:focus { border-color:var(--g); box-shadow:0 0 0 3px rgba(0,230,118,0.08); }
+textarea.field-input { min-height:80px; resize:none; }
+select.field-input { cursor:pointer; }
+
+.btn-full {
+  width:100%; padding:14px; border-radius:var(--r8);
+  font-family:var(--ff-head); font-size:16px; font-weight:700;
+  letter-spacing:1px; text-transform:uppercase; cursor:pointer;
+  border:none; transition:all 0.2s;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn-g { background:var(--g); color:#000; box-shadow:0 0 20px rgba(0,230,118,0.2); }
+.btn-g:active { transform:scale(0.98); }
+.btn-r { background:var(--r); color:#fff; }
+.btn-outline-g { background:transparent; color:var(--g); border:1px solid rgba(0,230,118,0.3); }
+
+/* ═══════════════════════════════════════════
+   FAB
+═══════════════════════════════════════════ */
+.fab {
+  position:fixed; right:20px; bottom:calc(76px + var(--safe-bot));
+  width:52px; height:52px; border-radius:50%;
+  background:var(--g); color:#000;
+  font-size:24px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 0 0 0 rgba(0,230,118,0.4), 0 4px 20px rgba(0,0,0,0.5);
+  cursor:pointer; border:none; z-index:100;
+  animation:fabPulse 3s ease-in-out infinite;
+  transition:transform 0.2s;
+}
+.fab:active { transform:scale(0.93); }
+@keyframes fabPulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(0,230,118,0.4), 0 4px 20px rgba(0,0,0,0.5); }
+  50% { box-shadow:0 0 0 12px rgba(0,230,118,0), 0 4px 20px rgba(0,0,0,0.5); }
+}
+
+/* ═══════════════════════════════════════════
+   RELATORIO PAGE
+═══════════════════════════════════════════ */
+.rel-option {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:var(--r8); padding:16px;
+  display:flex; align-items:center; gap:14px;
+  cursor:pointer; transition:border-color 0.2s, background 0.2s;
+  margin-bottom:10px;
+}
+.rel-option:active { background:var(--bg4); border-color:var(--border2); }
+.rel-ico { font-size:28px; }
+.rel-text { flex:1; }
+.rel-title { font-size:15px; font-weight:600; }
+.rel-sub { font-size:12px; color:var(--dim); margin-top:3px; }
+.rel-arrow { color:var(--text3); font-size:16px; }
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+.toast {
+  position:fixed; bottom:calc(80px + var(--safe-bot)); left:16px; right:16px;
+  background:var(--g3); border:1px solid var(--g);
+  border-radius:var(--r8); padding:12px 16px;
+  color:var(--g); font-size:14px; font-weight:600;
+  z-index:600; display:none; align-items:center; gap:8px;
+  box-shadow:0 0 20px rgba(0,230,118,0.15);
+  animation:toastIn 0.3s ease;
+}
+.toast.show { display:flex; }
+@keyframes toastIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════════ */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--g3); border-radius:2px; }
+
+/* ═══════════════════════════════════════════
+   DESKTOP ENHANCEMENT
+═══════════════════════════════════════════ */
+@media(min-width:768px) {
+  body { max-width:480px; margin:0 auto; border-left:1px solid var(--border); border-right:1px solid var(--border); }
+  .bottom-nav { max-width:480px; left:50%; transform:translateX(-50%); }
+  .fab { right:calc(50% - 220px); }
+  .toast { max-width:480px; left:50%; transform:translateX(-50%); }
+  .notif-sheet { max-width:480px; left:50%; transform:translateX(-50%); }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ TOPBAR ═══ -->
+<div class="topbar">
+  <div class="logo-block">
+    <div class="logo-hex"><span>VALE</span></div>
+    <div class="logo-text">
+      <div class="logo-main">Plano de Seca</div>
+      <div class="logo-sub">PAINEL OPERACIONAL</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="prontidao-chip">
+      <span class="pulse-dot"></span>
+      <span>ONLINE</span>
+    </div>
+    <div class="clock-block">
+      <div class="clock-time" id="clockTime">--:--</div>
+      <div id="clockDate" style="font-size:9px;letter-spacing:1px;">--/--</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAGES ═══ -->
+
+<!-- ── DASHBOARD ── -->
+<div class="page active" id="page-dash">
+  <div class="page-inner">
+
+    <!-- Prontidão Hero -->
+    <div class="prontidao-hero">
+      <div class="ph-label">● Índice de Prontidão Operacional</div>
+      <div class="ph-ring">
+        <svg viewBox="0 0 120 120">
+          <circle class="ph-ring-bg" cx="60" cy="60" r="52"/>
+          <circle class="ph-ring-fill ok" cx="60" cy="60" r="52"
+            stroke-dasharray="326.7"
+            stroke-dashoffset="26" id="prontRing"/>
+        </svg>
+        <div class="ph-center">
+          <span class="ph-pct ok" id="prontPct">92%</span>
+          <span class="ph-pct-sub">PRONTIDÃO</span>
+        </div>
+      </div>
+      <div class="ph-status-label ok">OPERACIONAL</div>
+      <div class="ph-detail">Turno A · 27 Mai 2026 · Base VALE Mineração</div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="alert-banner ab-red">
+      <span class="ab-icon">🔴</span>
+      <div class="ab-text"><strong>2 Alertas Críticos Ativos</strong>VTR-03 manutenção vencida · Extintor Área Norte sem carga</div>
+    </div>
+
+    <!-- KPIs principais -->
+    <div>
+      <div class="sec-header">
+        <span class="sec-title">Indicadores Gerais</span>
+        <span class="sec-meta" id="lastUpdate">Agora</span>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-accent ka-g"></div><span class="kpi-label">Viaturas OK</span><span class="kpi-val g">7<span style="font-size:18px;opacity:0.4">/9</span></span><span class="kpi-sub">1 manutenção · 1 reserva</span><span class="kpi-icon">🚒</span></div>
+      <div class="kpi"><div class="kpi-accent ka-g"></div><span class="kpi-label">Efetivo</span><span class="kpi-val g">18<span style="font-size:18px;opacity:0.4">/20</span></span><span class="kpi-sub">2 folgas programadas</span><span class="kpi-icon">👥</span></div>
+      <div class="kpi"><div class="kpi-accent ka-r"></div><span class="kpi-label">NCs Abertas</span><span class="kpi-val r">5</span><span class="kpi-sub">2 críticas urgentes</span><span class="kpi-icon">⚠️</span></div>
+      <div class="kpi"><div class="kpi-accent ka-y"></div><span class="kpi-label">Pendências</span><span class="kpi-val y">12</span><span class="kpi-sub">4 críticas · 8 normais</span><span class="kpi-icon">⏳</span></div>
+      <div class="kpi"><div class="kpi-accent ka-g"></div><span class="kpi-label">Inspeções Hoje</span><span class="kpi-val g">28</span><span class="kpi-sub">↑ 4 acima da meta</span><span class="kpi-icon">✅</span></div>
+      <div class="kpi"><div class="kpi-accent ka-b"></div><span class="kpi-label">Conformidade</span><span class="kpi-val b">94,7%</span><span class="kpi-sub">↑ +2,1% vs mês ant.</span><span class="kpi-icon">📊</span></div>
+    </div>
+
+    <!-- Status Plano de Seca -->
+    <div class="panel">
+      <div class="panel-top">
+        <span class="panel-heading">💧 Status – Plano de Seca</span>
+        <span class="srb-y srb-y" style="font-family:var(--ff-mono);font-size:10px;padding:3px 8px;border-radius:20px;background:rgba(255,214,0,0.1);color:var(--y);border:1px solid rgba(255,214,0,0.2);">NÍVEL 2</span>
+      </div>
+      <div class="status-list">
+        <div class="status-row" onclick="showPage('seca')">
+          <div class="sr-dot y"></div>
+          <div class="sr-main"><div class="sr-name">Reservatório Principal</div><div class="sr-sub">Nível: 58% · Meta mínima: 40%</div></div>
+          <span class="sr-badge srb-y">ATENÇÃO</span>
+        </div>
+        <div class="status-row" onclick="showPage('seca')">
+          <div class="sr-dot g"></div>
+          <div class="sr-main"><div class="sr-name">Bomba de Pressão P-01</div><div class="sr-sub">Operacional · Pressão 6,2 bar</div></div>
+          <span class="sr-badge srb-g">OK</span>
+        </div>
+        <div class="status-row" onclick="showPage('seca')">
+          <div class="sr-dot g"></div>
+          <div class="sr-main"><div class="sr-name">Bomba de Pressão P-02</div><div class="sr-sub">Operacional · Pressão 6,0 bar</div></div>
+          <span class="sr-badge srb-g">OK</span>
+        </div>
+        <div class="status-row" onclick="showPage('seca')">
+          <div class="sr-dot r"></div>
+          <div class="sr-main"><div class="sr-name">Ponto de Captação C-03</div><div class="sr-sub">Vazão reduzida – monitoramento ativo</div></div>
+          <span class="sr-badge srb-r">CRÍTICO</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conformidade áreas -->
+    <div class="panel">
+      <div class="panel-top">
+        <span class="panel-heading">📍 Conformidade por Área</span>
+        <span class="sec-meta">Últimos 7 dias</span>
+      </div>
+      <div class="panel-body">
+        <div class="prog-row">
+          <div class="prog-meta"><span class="prog-name">Área Norte – Mineração</span><span class="prog-pct g">97%</span></div>
+          <div class="prog-bar-wrap"><div class="prog-bar pb-g" style="width:97%"></div></div>
+        </div>
+        <div class="prog-row">
+          <div class="prog-meta"><span class="prog-name">Área Sul – Beneficiamento</span><span class="prog-pct g">94%</span></div>
+          <div class="prog-bar-wrap"><div class="prog-bar pb-g" style="width:94%"></div></div>
+        </div>
+        <div class="prog-row">
+          <div class="prog-meta"><span class="prog-name">Garagem / Viaturas</span><span class="prog-pct y">88%</span></div>
+          <div class="prog-bar-wrap"><div class="prog-bar pb-y" style="width:88%"></div></div>
+        </div>
+        <div class="prog-row">
+          <div class="prog-meta"><span class="prog-name">Posto de Comando</span><span class="prog-pct r">79%</span></div>
+          <div class="prog-bar-wrap"><div class="prog-bar pb-r" style="width:79%"></div></div>
+        </div>
+        <div class="prog-row">
+          <div class="prog-meta"><span class="prog-name">Almoxarifado / EPI</span><span class="prog-pct g">100%</span></div>
+          <div class="prog-bar-wrap"><div class="prog-bar pb-g" style="width:100%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Últimas 48h bar chart -->
+    <div class="panel">
+      <div class="panel-top">
+        <span class="panel-heading">📈 Inspeções – Últimos 7 dias</span>
+      </div>
+      <div class="panel-body">
+        <div class="bar-chart">
+          <div class="bc-col"><div class="bc-bar g" style="height:70%"></div><span class="bc-val">21</span><span class="bc-lbl">Seg</span></div>
+          <div class="bc-col"><div class="bc-bar g" style="height:83%"></div><span class="bc-val">25</span><span class="bc-lbl">Ter</span></div>
+          <div class="bc-col"><div class="bc-bar y" style="height:60%"></div><span class="bc-val">18</span><span class="bc-lbl">Qua</span></div>
+          <div class="bc-col"><div class="bc-bar g" style="height:90%"></div><span class="bc-val">27</span><span class="bc-lbl">Qui</span></div>
+          <div class="bc-col"><div class="bc-bar g" style="height:77%"></div><span class="bc-val">23</span><span class="bc-lbl">Sex</span></div>
+          <div class="bc-col"><div class="bc-bar g" style="height:67%"></div><span class="bc-val">20</span><span class="bc-lbl">Sáb</span></div>
+          <div class="bc-col"><div class="bc-bar g" style="height:93%"></div><span class="bc-val" style="color:var(--g)">28</span><span class="bc-lbl" style="color:var(--g)">Hj</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── VIATURAS ── -->
+<div class="page" id="page-viaturas">
+  <div class="page-inner">
+
+    <div class="kpi-grid-3" style="margin-bottom:0">
+      <div class="kpi"><div class="kpi-accent ka-g"></div><span class="kpi-label">Oper.</span><span class="kpi-val g" style="font-size:28px">7</span></div>
+      <div class="kpi"><div class="kpi-accent ka-y"></div><span class="kpi-label">Manut.</span><span class="kpi-val y" style="font-size:28px">1</span></div>
+      <div class="kpi"><div class="kpi-accent ka-b"></div><span class="kpi-label">Reserva</span><span class="kpi-val b" style="font-size:28px">1</span></div>
+    </div>
+
+    <div class="viatura-list">
+      <div class="viatura-card">
+        <div class="vc-stripe g"></div>
+        <div class="vc-body">
+          <div class="vc-row1">
+            <div><div class="vc-name">🚒 VTR-01 Auto-Bomba</div><div class="vc-plate">ABC-1234 · SCANIA P360</div></div>
+            <span class="sr-badge srb-g">OPER.</span>
+          </div>
+          <div class="vc-stats">
+            <div class="vc-stat"><div class="vc-stat-l">KM Atual</div><div class="vc-stat-v sv-w">47.320</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">Água (L)</div><div class="vc-stat-v sv-g">4.000</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">Equipe</div><div class="vc-stat-v sv-g">4/4</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="viatura-card">
+        <div class="vc-stripe r"></div>
+        <div class="vc-body">
+          <div class="vc-row1">
+            <div><div class="vc-name">🔧 VTR-03 Resgate</div><div class="vc-plate">DEF-5678 · MERCEDES SPRINTER</div></div>
+            <span class="sr-badge srb-r">MANUT.</span>
+          </div>
+          <div class="alert-banner ab-red" style="margin:8px 0;padding:8px 10px;font-size:12px;">
+            <span>🔴</span><div>Manutenção preventiva vencida +12 dias</div>
+          </div>
+          <div class="vc-stats">
+            <div class="vc-stat"><div class="vc-stat-l">KM Atual</div><div class="vc-stat-v sv-w">28.147</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">Manut.</div><div class="vc-stat-v sv-r">VENCIDA</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">OS</div><div class="vc-stat-v sv-y">ABERTA</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="viatura-card">
+        <div class="vc-stripe g"></div>
+        <div class="vc-body">
+          <div class="vc-row1">
+            <div><div class="vc-name">🚑 VTR-05 Ambulância UTI</div><div class="vc-plate">GHI-9012 · FORD TRANSIT</div></div>
+            <span class="sr-badge srb-g">OPER.</span>
+          </div>
+          <div class="vc-stats">
+            <div class="vc-stat"><div class="vc-stat-l">KM Atual</div><div class="vc-stat-v sv-w">19.800</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">O₂ (bar)</div><div class="vc-stat-v sv-g">150</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">Equipe</div><div class="vc-stat-v sv-g">2/2</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="viatura-card">
+        <div class="vc-stripe g"></div>
+        <div class="vc-body">
+          <div class="vc-row1">
+            <div><div class="vc-name">🚒 VTR-02 Caminhão-Pipa</div><div class="vc-plate">JKL-3456 · VOLVO FH</div></div>
+            <span class="sr-badge srb-g">OPER.</span>
+          </div>
+          <div class="vc-stats">
+            <div class="vc-stat"><div class="vc-stat-l">KM Atual</div><div class="vc-stat-v sv-w">63.200</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">Água (L)</div><div class="vc-stat-v sv-g">12.000</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">Equipe</div><div class="vc-stat-v sv-g">2/2</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="viatura-card" style="opacity:0.6">
+        <div class="vc-stripe" style="background:var(--dim)"></div>
+        <div class="vc-body">
+          <div class="vc-row1">
+            <div><div class="vc-name">🚐 VTR-08 Suporte</div><div class="vc-plate">MNO-7890 · IVECO DAILY</div></div>
+            <span class="sr-badge srb-d">RESERVA</span>
+          </div>
+          <div class="vc-stats">
+            <div class="vc-stat"><div class="vc-stat-l">KM Atual</div><div class="vc-stat-v sv-w">8.540</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">Status</div><div class="vc-stat-v" style="color:var(--dim)">STANDBY</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">Disponível</div><div class="vc-stat-v sv-g">SIM</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── INSPEÇÕES / CHECKLIST ── -->
+<div class="page" id="page-inspect">
+  <div class="page-inner">
+
+    <div class="prog-pill">
+      <div class="prog-pill-bar"><div class="prog-pill-fill" style="width:78%" id="ckProgress"></div></div>
+      <span class="prog-pill-text" id="ckPct">11/14 · 78%</span>
+    </div>
+
+    <!-- Filtros rápidos -->
+    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;">
+      <div class="srb-g" style="white-space:nowrap;padding:6px 12px;border-radius:20px;font-family:var(--ff-mono);font-size:10px;cursor:pointer;border:1px solid rgba(0,230,118,0.2);background:rgba(0,230,118,0.1);color:var(--g)">Todos</div>
+      <div style="white-space:nowrap;padding:6px 12px;border-radius:20px;font-family:var(--ff-mono);font-size:10px;cursor:pointer;border:1px solid var(--border);color:var(--dim)">EPI</div>
+      <div style="white-space:nowrap;padding:6px 12px;border-radius:20px;font-family:var(--ff-mono);font-size:10px;cursor:pointer;border:1px solid var(--border);color:var(--dim)">Incêndio</div>
+      <div style="white-space:nowrap;padding:6px 12px;border-radius:20px;font-family:var(--ff-mono);font-size:10px;cursor:pointer;border:1px solid var(--border);color:var(--dim)">Viaturas</div>
+      <div style="white-space:nowrap;padding:6px 12px;border-radius:20px;font-family:var(--ff-mono);font-size:10px;cursor:pointer;border:1px solid var(--border);color:var(--dim)">Pendentes</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-top">
+        <span class="panel-heading">🦺 EPI – Turno A · 27 Mai</span>
+        <span class="sr-badge srb-y">78%</span>
+      </div>
+      <div class="ck-list">
+        <div class="ck-item" onclick="toggleCk(this)">
+          <div class="ck-box ok">✓</div>
+          <div class="ck-text"><div class="ck-label">Capacetes em bom estado</div><div class="ck-sub">Verificar rachaduras e alça interna</div></div>
+          <span class="ck-tag">EPI</span>
+        </div>
+        <div class="ck-item" onclick="toggleCk(this)">
+          <div class="ck-box ok">✓</div>
+          <div class="ck-text"><div class="ck-label">Botas com certificação CA</div><div class="ck-sub">CA válido e biqueira íntegra</div></div>
+          <span class="ck-tag">EPI</span>
+        </div>
+        <div class="ck-item" onclick="toggleCk(this)">
+          <div class="ck-box"></div>
+          <div class="ck-text"><div class="ck-label">Luvas de proteção</div><div class="ck-sub">Integridade das luvas de couro e nitrila</div></div>
+          <span class="ck-tag">EPI</span>
+        </div>
+        <div class="ck-item" onclick="toggleCk(this)">
+          <div class="ck-box nok">✗</div>
+          <div class="ck-text"><div class="ck-label" style="color:var(--r)">Óculos de segurança ⚠️</div><div class="ck-sub" style="color:var(--r)">2 pares danificados – NC registrada</div></div>
+          <span class="ck-tag" style="color:var(--r);border-color:rgba(255,23,68,0.3)">NC</span>
+        </div>
+        <div class="ck-item" onclick="toggleCk(this)">
+          <div class="ck-box ok">✓</div>
+          <div class="ck-text"><div class="ck-label">Protetor auricular</div><div class="ck-sub">Estoque suficiente para o turno</div></div>
+          <span class="ck-tag">EPI</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-top">
+        <span class="panel-heading">🔥 Combate a Incêndio</span>
+        <span class="sr-badge srb-r">83%</span>
+      </div>
+      <div class="ck-list">
+        <div class="ck-item" onclick="toggleCk(this)">
+          <div class="ck-box ok">✓</div>
+          <div class="ck-text"><div class="ck-label">Extintores com carga</div><div class="ck-sub">Manômetro na faixa verde</div></div>
+          <span class="ck-tag">CI</span>
+        </div>
+        <div class="ck-item" onclick="toggleCk(this)">
+          <div class="ck-box ok">✓</div>
+          <div class="ck-text"><div class="ck-label">Mangueiras sem defeito</div><div class="ck-sub">Pontos de vazamento e rosca OK</div></div>
+          <span class="ck-tag">CI</span>
+        </div>
+        <div class="ck-item" onclick="toggleCk(this)">
+          <div class="ck-box nok">✗</div>
+          <div class="ck-text"><div class="ck-label" style="color:var(--r)">Extintor 14-B – Área Norte ⚠️</div><div class="ck-sub" style="color:var(--r)">Sem carga – recarga urgente</div></div>
+          <span class="ck-tag" style="color:var(--r);border-color:rgba(255,23,68,0.3)">NC</span>
+        </div>
+        <div class="ck-item" onclick="toggleCk(this)">
+          <div class="ck-box ok">✓</div>
+          <div class="ck-text"><div class="ck-label">Hidrantes desobstruídos</div><div class="ck-sub">Acesso livre num raio de 1,5m</div></div>
+          <span class="ck-tag">CI</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-full btn-g" onclick="showToast('✅ Checklist salvo com sucesso!')">💾 SALVAR CHECKLIST</button>
+
+  </div>
+</div>
+
+<!-- ── NCs ── -->
+<div class="page" id="page-ncs">
+  <div class="page-inner">
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-accent ka-r"></div><span class="kpi-label">Abertas</span><span class="kpi-val r">5</span></div>
+      <div class="kpi"><div class="kpi-accent ka-y"></div><span class="kpi-label">Em Tratamento</span><span class="kpi-val y">8</span></div>
+      <div class="kpi"><div class="kpi-accent ka-g"></div><span class="kpi-label">Encerradas</span><span class="kpi-val g">23</span><span class="kpi-sub">Este mês</span></div>
+      <div class="kpi"><div class="kpi-accent ka-b"></div><span class="kpi-label">Prazo Médio</span><span class="kpi-val b">2,4d</span><span class="kpi-sub">Meta: 3 dias</span></div>
+    </div>
+
+    <div class="nc-list">
+      <div class="nc-card crit">
+        <div class="nc-top">
+          <span class="nc-id">#0041 · 27/05</span>
+          <span class="sr-badge srb-r">🔴 CRÍTICA</span>
+        </div>
+        <div class="nc-title">Extintor 14-B sem carga – Área Norte</div>
+        <div class="nc-area">📍 Área Norte – Ponto P3</div>
+        <div class="nc-footer">
+          <span class="nc-resp">👤 Roberto Souza</span>
+          <span class="nc-deadline urgent">⏰ HOJE – VENCENDO</span>
+        </div>
+      </div>
+
+      <div class="nc-card crit">
+        <div class="nc-top">
+          <span class="nc-id">#0039 · 25/05</span>
+          <span class="sr-badge srb-r">🔴 CRÍTICA</span>
+        </div>
+        <div class="nc-title">Manutenção VTR-03 vencida (+12 dias)</div>
+        <div class="nc-area">📍 Garagem – Viatura Resgate</div>
+        <div class="nc-footer">
+          <span class="nc-resp">👤 Carlos Mendes</span>
+          <span class="nc-deadline urgent">⏰ HOJE – VENCENDO</span>
+        </div>
+      </div>
+
+      <div class="nc-card mod">
+        <div class="nc-top">
+          <span class="nc-id">#0040 · 26/05</span>
+          <span class="sr-badge srb-y">🟡 MODERADA</span>
+        </div>
+        <div class="nc-title">2 pares de óculos de segurança danificados</div>
+        <div class="nc-area">📍 Almoxarifado EPI</div>
+        <div class="nc-footer">
+          <span class="nc-resp">👤 Ana Lima</span>
+          <span class="nc-deadline ok">📅 29/05/2026</span>
+        </div>
+      </div>
+
+      <div class="nc-card mod">
+        <div class="nc-top">
+          <span class="nc-id">#0038 · 24/05</span>
+          <span class="sr-badge srb-y">🟡 MODERADA</span>
+        </div>
+        <div class="nc-title">Acesso ao hidrante obstruído – Área Sul</div>
+        <div class="nc-area">📍 Área Sul – H-07</div>
+        <div class="nc-footer">
+          <span class="nc-resp">👤 Roberto Souza</span>
+          <span class="nc-deadline ok">📅 30/05/2026</span>
+        </div>
+      </div>
+
+      <div class="nc-card low">
+        <div class="nc-top">
+          <span class="nc-id">#0037 · 23/05</span>
+          <span class="sr-badge srb-b">🔵 BAIXA</span>
+        </div>
+        <div class="nc-title">Rádio comunicador com bateria fraca</div>
+        <div class="nc-area">📍 Posto de Comando</div>
+        <div class="nc-footer">
+          <span class="nc-resp">👤 Ana Lima</span>
+          <span class="nc-deadline ok">📅 02/06/2026</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-full btn-r" onclick="openSheet('sheetNC')">⚠️ REGISTRAR NOVA NC</button>
+
+  </div>
+</div>
+
+<!-- ── PLANO DE SECA ── -->
+<div class="page" id="page-seca">
+  <div class="page-inner">
+
+    <!-- Nível atual -->
+    <div class="seca-nivel">
+      <div class="sn-label">● Status Atual – Plano de Seca VALE</div>
+      <div class="sn-badge">
+        <span style="font-size:28px">💧</span>
+        <span class="sn-badge-label">NÍVEL 2</span>
+      </div>
+      <div class="sn-desc">Atenção Elevada · Monitoramento Intensificado · Recursos Pré-posicionados</div>
+      <div class="nivel-steps">
+        <div class="nivel-step done-g"></div>
+        <div class="nivel-step done-g"></div>
+        <div class="nivel-step done-y"></div>
+        <div class="nivel-step empty"></div>
+        <div class="nivel-step empty"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;">
+        <span style="font-family:var(--ff-mono);font-size:9px;color:var(--g)">NORMAL</span>
+        <span style="font-family:var(--ff-mono);font-size:9px;color:var(--y)">◄ AQUI</span>
+        <span style="font-family:var(--ff-mono);font-size:9px;color:var(--r)">CRÍTICO</span>
+      </div>
+    </div>
+
+    <!-- KPIs hídricos -->
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-accent ka-y"></div><span class="kpi-label">Reservatório</span><span class="kpi-val y">58%</span><span class="kpi-sub">Meta mín.: 40%</span><span class="kpi-icon">💧</span></div>
+      <div class="kpi"><div class="kpi-accent ka-g"></div><span class="kpi-label">Pressão Rede</span><span class="kpi-val g">6,1 bar</span><span class="kpi-sub">Normal: ≥ 5,5 bar</span><span class="kpi-icon">🔧</span></div>
+      <div class="kpi"><div class="kpi-accent ka-y"></div><span class="kpi-label">Vazão C-03</span><span class="kpi-val y">-22%</span><span class="kpi-sub">Captação reduzida</span><span class="kpi-icon">📉</span></div>
+      <div class="kpi"><div class="kpi-accent ka-b"></div><span class="kpi-label">Autônomos</span><span class="kpi-val b">4.200L</span><span class="kpi-sub">Pipas disponíveis</span><span class="kpi-icon">🚒</span></div>
+    </div>
+
+    <!-- Ações do plano -->
+    <div>
+      <div class="sec-header"><span class="sec-title">Ações do Plano</span></div>
+    </div>
+
+    <div class="seca-actions">
+      <div class="seca-action">
+        <span class="sa-ico">✅</span>
+        <div class="sa-text"><div class="sa-title">Vistoria de reservatórios</div><div class="sa-sub">Frequência: Diária · Responsável: C. Mendes</div></div>
+        <span class="sa-status" style="color:var(--g)">OK</span>
+      </div>
+      <div class="seca-action">
+        <span class="sa-ico">✅</span>
+        <div class="sa-text"><div class="sa-title">Pré-posicionamento VTR-02</div><div class="sa-sub">Caminhão-Pipa · Área Norte</div></div>
+        <span class="sa-status" style="color:var(--g)">OK</span>
+      </div>
+      <div class="seca-action">
+        <span class="sa-ico">⚠️</span>
+        <div class="sa-text"><div class="sa-title">Monitoramento captação C-03</div><div class="sa-sub">Vazão abaixo do esperado</div></div>
+        <span class="sa-status" style="color:var(--y)">ATENÇÃO</span>
+      </div>
+      <div class="seca-action">
+        <span class="sa-ico">✅</span>
+        <div class="sa-text"><div class="sa-title">Simulado de seca agendado</div><div class="sa-sub">30/05/2026 · 07h00</div></div>
+        <span class="sa-status" style="color:var(--b)">AGD.</span>
+      </div>
+      <div class="seca-action">
+        <span class="sa-ico">🔴</span>
+        <div class="sa-text"><div class="sa-title">Recarga do ponto de captação</div><div class="sa-sub">Ação corretiva pendente – urgente</div></div>
+        <span class="sa-status" style="color:var(--r)">URGENTE</span>
+      </div>
+    </div>
+
+    <!-- Histórico nível reservatório -->
+    <div class="panel">
+      <div class="panel-top"><span class="panel-heading">📊 Nível Reservatório – Últimos 7 dias</span></div>
+      <div class="panel-body">
+        <div class="bar-chart">
+          <div class="bc-col"><div class="bc-bar g" style="height:72%"></div><span class="bc-val">72%</span><span class="bc-lbl">Seg</span></div>
+          <div class="bc-col"><div class="bc-bar g" style="height:68%"></div><span class="bc-val">68%</span><span class="bc-lbl">Ter</span></div>
+          <div class="bc-col"><div class="bc-bar y" style="height:65%"></div><span class="bc-val">65%</span><span class="bc-lbl">Qua</span></div>
+          <div class="bc-col"><div class="bc-bar y" style="height:62%"></div><span class="bc-val">62%</span><span class="bc-lbl">Qui</span></div>
+          <div class="bc-col"><div class="bc-bar y" style="height:60%"></div><span class="bc-val">60%</span><span class="bc-lbl">Sex</span></div>
+          <div class="bc-col"><div class="bc-bar y" style="height:59%"></div><span class="bc-val">59%</span><span class="bc-lbl">Sáb</span></div>
+          <div class="bc-col"><div class="bc-bar y" style="height:58%"></div><span class="bc-val" style="color:var(--y)">58%</span><span class="bc-lbl" style="color:var(--y)">Hj</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-family:var(--ff-mono);font-size:10px;color:var(--dim);">
+          <div style="width:20px;height:1px;background:var(--r);"></div> Nível crítico: 40%
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── RELATÓRIOS ── -->
+<div class="page" id="page-relat">
+  <div class="page-inner">
+
+    <div class="alert-banner ab-blue">
+      <span class="ab-icon">📊</span>
+      <div class="ab-text"><strong>Relatórios automáticos</strong>Gerados com dados em tempo real, incluindo assinatura digital do supervisor</div>
+    </div>
+
+    <div>
+      <div class="sec-header"><span class="sec-title">Gerar Relatório</span></div>
+    </div>
+
+    <div class="rel-option" onclick="showToast('📄 Gerando relatório diário...')">
+      <span class="rel-ico">📋</span>
+      <div class="rel-text">
+        <div class="rel-title">Relatório Diário</div>
+        <div class="rel-sub">Inspeções, NCs e efetivo do turno atual</div>
+      </div>
+      <span class="rel-arrow">▶</span>
+    </div>
+
+    <div class="rel-option" onclick="showToast('📊 Gerando relatório semanal...')">
+      <span class="rel-ico">📈</span>
+      <div class="rel-text">
+        <div class="rel-title">Relatório Semanal</div>
+        <div class="rel-sub">Desempenho consolidado da semana</div>
+      </div>
+      <span class="rel-arrow">▶</span>
+    </div>
+
+    <div class="rel-option" onclick="showToast('⭐ Gerando relatório executivo...')">
+      <span class="rel-ico">🏆</span>
+      <div class="rel-text">
+        <div class="rel-title">Relatório Executivo</div>
+        <div class="rel-sub">KPIs estratégicos para apresentação à VALE</div>
+      </div>
+      <span class="rel-arrow" style="color:var(--y)">▶</span>
+    </div>
+
+    <div class="rel-option" onclick="showToast('💧 Gerando relatório do Plano de Seca...')">
+      <span class="rel-ico">💧</span>
+      <div class="rel-text">
+        <div class="rel-title">Relatório – Plano de Seca</div>
+        <div class="rel-sub">Indicadores hídricos e ações do plano</div>
+      </div>
+      <span class="rel-arrow">▶</span>
+    </div>
+
+    <div>
+      <div class="sec-header" style="margin-top:4px;"><span class="sec-title">Histórico</span></div>
+    </div>
+
+    <div class="status-list panel">
+      <div class="status-row">
+        <div class="sr-dot g"></div>
+        <div class="sr-main"><div class="sr-name">Relatório Diário – 27/05</div><div class="sr-sub">Gerado 06h00 · 4 págs · Carlos Mendes</div></div>
+        <span class="sr-badge srb-g">PDF</span>
+      </div>
+      <div class="status-row">
+        <div class="sr-dot g"></div>
+        <div class="sr-main"><div class="sr-name">Executivo – Mai/2026</div><div class="sr-sub">Gerado 26/05 · 12 págs · C. Mendes</div></div>
+        <span class="sr-badge srb-g">PDF</span>
+      </div>
+      <div class="status-row">
+        <div class="sr-dot g"></div>
+        <div class="sr-main"><div class="sr-name">Semanal – 20-26 Mai</div><div class="sr-sub">Gerado 23/05 · 8 págs · Sistema</div></div>
+        <span class="sr-badge srb-g">PDF</span>
+      </div>
+      <div class="status-row">
+        <div class="sr-dot g"></div>
+        <div class="sr-main"><div class="sr-name">Plano de Seca – Abr/2026</div><div class="sr-sub">Gerado 01/05 · 16 págs · C. Mendes</div></div>
+        <span class="sr-badge srb-b">PDF</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ BOTTOM NAV ═══ -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="showPage('dash')" id="nav-dash">
+    <span class="nav-ico">📊</span>Dashboard
+  </button>
+  <button class="nav-btn" onclick="showPage('viaturas')" id="nav-viaturas">
+    <span class="nav-ico">🚒</span>Viaturas
+  </button>
+  <button class="nav-btn" onclick="showPage('inspect')" id="nav-inspect">
+    <span class="nav-ico">✅</span>Inspeções
+  </button>
+  <button class="nav-btn" onclick="showPage('ncs')" id="nav-ncs">
+    <span class="nav-ico">⚠️</span>NCs
+    <span class="nav-badge">5</span>
+  </button>
+  <button class="nav-btn" onclick="showPage('seca')" id="nav-seca">
+    <span class="nav-ico">💧</span>Plano Seca
+  </button>
+  <button class="nav-btn" onclick="showPage('relat')" id="nav-relat">
+    <span class="nav-ico">📄</span>Relatórios
+  </button>
+</nav>
+
+<!-- ═══ FAB ═══ -->
+<button class="fab" onclick="openSheet('sheetNew')" title="Nova Inspeção">+</button>
+
+<!-- ═══ SHEET: Nova Inspeção ═══ -->
+<div class="sheet-overlay" id="sheetNew" onclick="closeSheetOutside(event,'sheetNew')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">📋 Nova Inspeção</span>
+      <button class="sheet-close" onclick="closeSheet('sheetNew')">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field-group">
+        <label class="field-label">Tipo de Inspeção</label>
+        <select class="field-input">
+          <option>Inspeção Diária – EPI</option>
+          <option>Inspeção de Viatura</option>
+          <option>Inspeção de Equipamentos</option>
+          <option>Combate a Incêndio</option>
+          <option>Plano de Seca – Reservatório</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Área / Local</label>
+        <select class="field-input">
+          <option>Área Norte – Mineração</option>
+          <option>Área Sul – Beneficiamento</option>
+          <option>Garagem de Viaturas</option>
+          <option>Almoxarifado</option>
+          <option>Posto de Comando</option>
+          <option>Reservatório Principal</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Responsável</label>
+        <select class="field-input">
+          <option>Carlos Mendes – Supervisor</option>
+          <option>Ana Lima – Técnica</option>
+          <option>Roberto Souza – Inspetor</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Observações</label>
+        <textarea class="field-input" placeholder="Descreva observações relevantes..."></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div style="background:rgba(0,230,118,0.05);border:1px dashed rgba(0,230,118,0.2);border-radius:var(--r8);padding:14px;text-align:center;cursor:pointer;">
+          <div style="font-size:22px;margin-bottom:4px;">📸</div>
+          <div style="font-size:11px;color:var(--dim)">Foto / Evidência</div>
+        </div>
+        <div style="background:rgba(0,230,118,0.05);border:1px dashed rgba(0,230,118,0.2);border-radius:var(--r8);padding:14px;text-align:center;cursor:pointer;">
+          <div style="font-size:22px;margin-bottom:4px;">✍️</div>
+          <div style="font-size:11px;color:var(--dim)">Ass. Digital</div>
+        </div>
+      </div>
+      <button class="btn-full btn-g" onclick="saveInspection()">💾 SALVAR INSPEÇÃO</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SHEET: Nova NC ═══ -->
+<div class="sheet-overlay" id="sheetNC" onclick="closeSheetOutside(event,'sheetNC')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">⚠️ Registrar NC</span>
+      <button class="sheet-close" onclick="closeSheet('sheetNC')">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field-group">
+        <label class="field-label">Classificação</label>
+        <select class="field-input">
+          <option>🔴 Crítica – Parar operação</option>
+          <option>🟡 Moderada – Resolver em 24h</option>
+          <option>🔵 Baixa – Monitorar</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Descrição da Não Conformidade</label>
+        <textarea class="field-input" placeholder="Descreva detalhadamente..."></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Área / Local</label>
+        <select class="field-input">
+          <option>Área Norte – Mineração</option>
+          <option>Área Sul – Beneficiamento</option>
+          <option>Garagem de Viaturas</option>
+          <option>Almoxarifado</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Ação Corretiva</label>
+        <textarea class="field-input" placeholder="Descreva a ação corretiva proposta..."></textarea>
+      </div>
+      <button class="btn-full btn-r" onclick="saveNC()">⚠️ REGISTRAR NC</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast" id="toast">
+  <span id="toastMsg">✅ Operação realizada com sucesso!</span>
+</div>
+
+<script>
+/* ─── CLOCK ─── */
+function tick(){
+  const d = new Date();
+  document.getElementById('clockTime').textContent = d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('clockDate').textContent = d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+}
+tick(); setInterval(tick,1000);
+
+/* ─── NAVIGATION ─── */
+const pages = ['dash','viaturas','inspect','ncs','seca','relat'];
+
+function showPage(id) {
+  pages.forEach(p => {
+    document.getElementById('page-'+p)?.classList.remove('active');
+    document.getElementById('nav-'+p)?.classList.remove('active');
+  });
+  document.getElementById('page-'+id)?.classList.add('active');
+  document.getElementById('nav-'+id)?.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ─── BOTTOM SHEET ─── */
+function openSheet(id){ document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
+function closeSheet(id){ document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
+function closeSheetOutside(e,id){ if(e.target===document.getElementById(id)) closeSheet(id); }
+
+/* ─── TOAST ─── */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+/* ─── CHECKLIST TOGGLE ─── */
+const ckStates = ['','ok','nok'];
+const ckIcons  = ['','✓','✗'];
+function toggleCk(item) {
+  const box = item.querySelector('.ck-box');
+  const cur = ckStates.indexOf(box.classList.contains('ok')?'ok':box.classList.contains('nok')?'nok':'');
+  const next = (cur+1) % ckStates.length;
+  box.className='ck-box'+(ckStates[next]?' '+ckStates[next]:'');
+  box.textContent = ckIcons[next];
+  updateProgress();
+}
+
+function updateProgress(){
+  const boxes = document.querySelectorAll('#page-inspect .ck-box');
+  const done = [...boxes].filter(b=>b.classList.contains('ok')||b.classList.contains('nok')).length;
+  const pct = Math.round(done/boxes.length*100);
+  document.getElementById('ckProgress').style.width = pct+'%';
+  document.getElementById('ckPct').textContent = done+'/'+boxes.length+' · '+pct+'%';
+}
+
+/* ─── FORMS ─── */
+function saveInspection(){
+  closeSheet('sheetNew');
+  showToast('✅ Inspeção registrada com sucesso!');
+}
+function saveNC(){
+  closeSheet('sheetNC');
+  showToast('⚠️ NC registrada e notificação enviada!');
+}
+
+/* ─── ANIMATE RINGS & BARS on load ─── */
+window.addEventListener('load', ()=>{
+  // Ring animation
+  const ring = document.getElementById('prontRing');
+  if(ring){
+    const circ = 326.7;
+    const pct = 0.92;
+    ring.style.strokeDashoffset = circ;
+    setTimeout(()=>{ ring.style.transition='stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1)'; ring.style.strokeDashoffset = circ*(1-pct); },200);
+  }
+  // Progress bars animate
+  document.querySelectorAll('.prog-bar').forEach(b=>{
+    const w = b.style.width; b.style.width='0';
+    setTimeout(()=>{ b.style.width=w; },400);
+  });
+  // BC bars - animate heights
+  document.querySelectorAll('.bc-bar').forEach((b,i)=>{
+    const h = b.style.height; b.style.height='0';
+    setTimeout(()=>{ b.style.height=h; b.style.transition='height 0.6s ease'; },300+i*60);
+  });
+});
+</script>
+</body>
+</html>
