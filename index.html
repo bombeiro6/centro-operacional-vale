@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -6,14 +7,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0A0F0A">
-<title>VALE ·  Plano de Seca – Painel Operacional</title>
+<title>VALE · Plano de Seca – Painel Operacional</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Barlow:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════
    TOKENS & RESET
 ═══════════════════════════════════════════ */
 :root {
-  -b: #2196F3;        /* azul operacional */
+  --g: #00E676;        /* verde operacional */
   --g2: #00C853;
   --g3: #1B5E20;
   --y: #FFD600;        /* atenção */
@@ -22,7 +23,7 @@
   --r2: #B71C1C;
   --b: #00B0FF;        /* informação */
   --b2: #0288D1;
-  --bg: #1E1E1E;
+  --bg: #070C07;
   --bg2: #0D130D;
   --bg3: #111811;
   --bg4: #161E16;
@@ -666,7 +667,7 @@ select.field-input { cursor:pointer; }
   <div class="logo-block">
     <div class="logo-hex"><span>VALE</span></div>
     <div class="logo-text">
-      <div class="logo-main">Emergência Treminal Parauapebas </div>
+      <div class="logo-main">Plano de Seca</div>
       <div class="logo-sub">PAINEL OPERACIONAL</div>
     </div>
   </div>
@@ -704,13 +705,13 @@ select.field-input { cursor:pointer; }
         </div>
       </div>
       <div class="ph-status-label ok">OPERACIONAL</div>
-      <div class="ph-detail">Turno A · 27 Mai 2026 · Base Vale </div>
+      <div class="ph-detail">Turno A · 27 Mai 2026 · Base VALE Mineração</div>
     </div>
 
     <!-- Alerts -->
     <div class="alert-banner ab-red">
       <span class="ab-icon">🔴</span>
-      <div class="ab-text"><strong>2 Alertas Críticos Ativos</strong>Extintores e Mangueiras Vencidas l · Extintor Área 1/2 No Prazo de manutenção</div>
+      <div class="ab-text"><strong>2 Alertas Críticos Ativos</strong>VTR-03 manutenção vencida · Extintor Área Norte sem carga</div>
     </div>
 
     <!-- KPIs principais -->
@@ -738,7 +739,7 @@ select.field-input { cursor:pointer; }
       <div class="status-list">
         <div class="status-row" onclick="showPage('seca')">
           <div class="sr-dot y"></div>
-          <div class="sr-main"><div class="sr-name">Reservatório Principal</div><div class="sr-sub">Nível: 80% · Meta mínima: 40%</div></div>
+          <div class="sr-main"><div class="sr-name">Reservatório Principal</div><div class="sr-sub">Nível: 58% · Meta mínima: 40%</div></div>
           <span class="sr-badge srb-y">ATENÇÃO</span>
         </div>
         <div class="status-row" onclick="showPage('seca')">
@@ -748,7 +749,7 @@ select.field-input { cursor:pointer; }
         </div>
         <div class="status-row" onclick="showPage('seca')">
           <div class="sr-dot g"></div>
-          <div class="sr-main"><div class="sr-name">Bomba de Pressão P-02</div><div class="sr-sub">Operacional · Pressão 12 kgf </div></div>
+          <div class="sr-main"><div class="sr-name">Bomba de Pressão P-02</div><div class="sr-sub">Operacional · Pressão 6,0 bar</div></div>
           <span class="sr-badge srb-g">OK</span>
         </div>
         <div class="status-row" onclick="showPage('seca')">
@@ -767,11 +768,11 @@ select.field-input { cursor:pointer; }
       </div>
       <div class="panel-body">
         <div class="prog-row">
-          <div class="prog-meta"><span class="prog-name">Área Níquel </span><span class="prog-pct g">97%</span></div>
+          <div class="prog-meta"><span class="prog-name">Área Norte – Mineração</span><span class="prog-pct g">97%</span></div>
           <div class="prog-bar-wrap"><div class="prog-bar pb-g" style="width:97%"></div></div>
         </div>
         <div class="prog-row">
-          <div class="prog-meta"><span class="prog-name">Área Cobre /span><span class="prog-pct g">94%</span></div>
+          <div class="prog-meta"><span class="prog-name">Área Sul – Beneficiamento</span><span class="prog-pct g">94%</span></div>
           <div class="prog-bar-wrap"><div class="prog-bar pb-g" style="width:94%"></div></div>
         </div>
         <div class="prog-row">
@@ -825,11 +826,11 @@ select.field-input { cursor:pointer; }
         <div class="vc-stripe g"></div>
         <div class="vc-body">
           <div class="vc-row1">
-            <div><div class="vc-name">🚒 VTR-03 AHQ Auto- Hidro- Químico</div><div class="vc-plate">ABC-1234 · SCANIA XT</div></div>
+            <div><div class="vc-name">🚒 VTR-01 Auto-Bomba</div><div class="vc-plate">ABC-1234 · SCANIA P360</div></div>
             <span class="sr-badge srb-g">OPER.</span>
           </div>
           <div class="vc-stats">
-            <div class="vc-stat"><div class="vc-stat-l">KM Atual</div><div class="vc-stat-v sv-w">1.320</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">KM Atual</div><div class="vc-stat-v sv-w">47.320</div></div>
             <div class="vc-stat"><div class="vc-stat-l">Água (L)</div><div class="vc-stat-v sv-g">4.000</div></div>
             <div class="vc-stat"><div class="vc-stat-l">Equipe</div><div class="vc-stat-v sv-g">4/4</div></div>
           </div>
@@ -840,15 +841,15 @@ select.field-input { cursor:pointer; }
         <div class="vc-stripe r"></div>
         <div class="vc-body">
           <div class="vc-row1">
-            <div><div class="vc-name">🔧 VTR-01 Resgate</div><div class="vc-plate">DEF-5678 · MASTER</div></div>
+            <div><div class="vc-name">🔧 VTR-03 Resgate</div><div class="vc-plate">DEF-5678 · MERCEDES SPRINTER</div></div>
             <span class="sr-badge srb-r">MANUT.</span>
           </div>
           <div class="alert-banner ab-red" style="margin:8px 0;padding:8px 10px;font-size:12px;">
-            <span>🔴</span><div>Em dias</div>
+            <span>🔴</span><div>Manutenção preventiva vencida +12 dias</div>
           </div>
           <div class="vc-stats">
             <div class="vc-stat"><div class="vc-stat-l">KM Atual</div><div class="vc-stat-v sv-w">28.147</div></div>
-            <div class="vc-stat"><div class="vc-stat-l">Manut.</div><div class="vc-stat-v sv-r">ok</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">Manut.</div><div class="vc-stat-v sv-r">VENCIDA</div></div>
             <div class="vc-stat"><div class="vc-stat-l">OS</div><div class="vc-stat-v sv-y">ABERTA</div></div>
           </div>
         </div>
@@ -858,7 +859,7 @@ select.field-input { cursor:pointer; }
         <div class="vc-stripe g"></div>
         <div class="vc-body">
           <div class="vc-row1">
-            <div><div class="vc-name">🚑 VTR-02 Ambulância UTI</div><div class="vc-plate">GHI-9012 · s10</div></div>
+            <div><div class="vc-name">🚑 VTR-05 Ambulância UTI</div><div class="vc-plate">GHI-9012 · FORD TRANSIT</div></div>
             <span class="sr-badge srb-g">OPER.</span>
           </div>
           <div class="vc-stats">
@@ -873,16 +874,34 @@ select.field-input { cursor:pointer; }
         <div class="vc-stripe g"></div>
         <div class="vc-body">
           <div class="vc-row1">
-            <div><div class="vc-name">🚒 VTR-04 AUTO-RáPIDO</div><div class="vc-plate">JKL-3456 · TOYOTA</div></div>
+            <div><div class="vc-name">🚒 VTR-02 Caminhão-Pipa</div><div class="vc-plate">JKL-3456 · VOLVO FH</div></div>
             <span class="sr-badge srb-g">OPER.</span>
           </div>
           <div class="vc-stats">
             <div class="vc-stat"><div class="vc-stat-l">KM Atual</div><div class="vc-stat-v sv-w">63.200</div></div>
-            <div class="vc-stat"><div class="vc-stat-l">Materias de Captura-Mitigação (L)</div><div class="vc-stat-v sv-g">12.000</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">Água (L)</div><div class="vc-stat-v sv-g">12.000</div></div>
             <div class="vc-stat"><div class="vc-stat-l">Equipe</div><div class="vc-stat-v sv-g">2/2</div></div>
           </div>
         </div>
-      </div>/div>
+      </div>
+
+      <div class="viatura-card" style="opacity:0.6">
+        <div class="vc-stripe" style="background:var(--dim)"></div>
+        <div class="vc-body">
+          <div class="vc-row1">
+            <div><div class="vc-name">🚐 VTR-08 Suporte</div><div class="vc-plate">MNO-7890 · IVECO DAILY</div></div>
+            <span class="sr-badge srb-d">RESERVA</span>
+          </div>
+          <div class="vc-stats">
+            <div class="vc-stat"><div class="vc-stat-l">KM Atual</div><div class="vc-stat-v sv-w">8.540</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">Status</div><div class="vc-stat-v" style="color:var(--dim)">STANDBY</div></div>
+            <div class="vc-stat"><div class="vc-stat-l">Disponível</div><div class="vc-stat-v sv-g">SIM</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ── INSPEÇÕES / CHECKLIST ── -->
 <div class="page" id="page-inspect">
@@ -1280,9 +1299,9 @@ select.field-input { cursor:pointer; }
       <div class="field-group">
         <label class="field-label">Responsável</label>
         <select class="field-input">
-          <option>Paulo Rafael  – Supervisor</option>
-          <option>Paulo Geonave  – Técnica</option>
-          <option>Leticia lopes – Inspetor</option>
+          <option>Carlos Mendes – Supervisor</option>
+          <option>Ana Lima – Técnica</option>
+          <option>Roberto Souza – Inspetor</option>
         </select>
       </div>
       <div class="field-group">
