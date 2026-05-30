@@ -1121,30 +1121,5 @@ window.addEventListener('load',()=>{
   document.querySelectorAll('.bc-bar').forEach((b,i)=>{const h=b.style.height;b.style.height='0';setTimeout(()=>{b.style.transition='height .6s ease';b.style.height=h},400+i*50)});
 });
 </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const supabaseUrl = 'https://SEU-PROJETO.supabase.co';
-    const supabaseKey = 'sua_publishable_key';
-
-    const db = window.supabase.createClient(
-      supabaseUrl,
-      supabaseKey
-    );
-
-    async function carregarViaturas() {
-      const { data, error } = await db
-      .from( 'VIATURAS')
-      .select('*');
-
-      console.log('VIATURAS:', data);
-
-      if (error) {
-        console.error('ERRO:',error);
-      }
-    }
-
-    carregarViaturas();
-  </script>
-  </script>
-</body>
+  </body>
 </html>
